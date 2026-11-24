@@ -1,0 +1,9 @@
+.git
+.vscode
+data/uploads/*
+data/exports/*
+data/projects.json
+data/accounts.json
+*.log
+index.html.bak*
+node_modules
