@@ -1382,6 +1382,7 @@ async function importYoutube(input) {
   const id = crypto.randomUUID();
   const template = path.join(UPLOADS, `${id}.%(ext)s`);
   const subLangs = 'en-orig,hi-orig,en-US,en-GB,hi-IN';
+  const nodeRuntime = process.execPath ? `node:${process.execPath}` : 'node';
   const args = [
     '--no-playlist',
     '--no-warnings',
@@ -1390,8 +1391,9 @@ async function importYoutube(input) {
     '--extractor-retries', '5',
     '--fragment-retries', '5',
     '--max-filesize', '8G',
-    '--extractor-args', 'youtube:player_client=android,web',
-    '-f', 'b[ext=mp4][height<=1080]/bv*[height<=1080]+ba/b[height<=1080]/b',
+    '--geo-bypass',
+    '--js-runtimes', nodeRuntime,
+    '-f', 'b[ext=mp4][height<=1080]/bv*[height<=1080]+ba/b[height<=1080]/best',
     '--merge-output-format', 'mp4',
     '--remux-video', 'mp4',
     '--write-subs',
@@ -1426,7 +1428,25 @@ async function importYoutube(input) {
     );
     if (!possibleFile) {
       try {
-        const fallbackArgs = args.filter(a => !['--write-auto-subs', '--write-subs', '--sub-langs', '--sub-format', subLangs, 'vtt'].includes(a));
+        const fallbackArgs = [
+          '--no-playlist',
+          '--no-warnings',
+          '--socket-timeout', '30',
+          '--retries', '5',
+          '--extractor-retries', '5',
+          '--fragment-retries', '5',
+          '--max-filesize', '8G',
+          '--geo-bypass',
+          '--compat-options', 'no-youtube-unavailable-videos',
+          '--js-runtimes', nodeRuntime,
+          '-f', 'best[ext=mp4][height<=1080]/best[height<=1080]/best',
+          '--merge-output-format', 'mp4',
+          '--remux-video', 'mp4',
+          '-o', template,
+          '--print', 'title',
+          '--print', 'after_move:filepath',
+          parsed.href
+        ];
         result = await execFileAsync('python', ['-m', 'yt_dlp', ...fallbackArgs], {
           windowsHide: true,
           timeout: 25 * 60 * 1000,
