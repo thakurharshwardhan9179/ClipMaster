@@ -3269,16 +3269,35 @@
                   <input type="text" id="topHookInput" placeholder="e.g. Saadi ke baad sab acha ho jayega 😂" maxlength="90" style="width:100%;font-size:13px;padding:7px 10px;background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:6px;color:#fff">
                 </label>
 
-                <!-- Color selector for Hook Title -->
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-                  <span style="font-size:11px;color:var(--text-sub)">Hook Color</span>
-                  <div class="swatches" id="hookColorSwatches" style="display:flex;gap:6px">
-                    <button type="button" class="swatch on" data-color="#FFE500" style="width:20px;height:20px;border-radius:50%;background:#FFE500;border:2px solid #fff" title="Yellow"></button>
-                    <button type="button" class="swatch" data-color="#FFFFFF" style="width:20px;height:20px;border-radius:50%;background:#FFFFFF;border:2px solid transparent" title="White"></button>
-                    <button type="button" class="swatch" data-color="#00FF88" style="width:20px;height:20px;border-radius:50%;background:#00FF88;border:2px solid transparent" title="Neon Lime"></button>
-                    <button type="button" class="swatch" data-color="#FF334B" style="width:20px;height:20px;border-radius:50%;background:#FF334B;border:2px solid transparent" title="Red"></button>
-                  </div>
+                <!-- Top Hook Style & Color -->
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+                  <label class="setting">
+                    <span style="font-size:11px;color:var(--text-sub)">Hook Style</span>
+                    <select id="topHookStyle" style="font-size:11px;padding:6px;background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:6px;color:#fff;width:100%">
+                      <option value="card" selected>🟡 Yellow Card Box (Ref 4)</option>
+                      <option value="outline">🔤 Bold Outline Text</option>
+                      <option value="white">⚪ White Subtitle</option>
+                    </select>
+                  </label>
+                  <label class="setting">
+                    <span style="font-size:11px;color:var(--text-sub)">Hook Color</span>
+                    <div class="swatches" id="hookColorSwatches" style="display:flex;gap:5px;padding-top:4px">
+                      <button type="button" class="swatch on" data-color="#FFE500" style="width:20px;height:20px;border-radius:50%;background:#FFE500;border:2px solid #fff" title="Yellow"></button>
+                      <button type="button" class="swatch" data-color="#FFFFFF" style="width:20px;height:20px;border-radius:50%;background:#FFFFFF;border:2px solid transparent" title="White"></button>
+                      <button type="button" class="swatch" data-color="#00FF88" style="width:20px;height:20px;border-radius:50%;background:#00FF88;border:2px solid transparent" title="Neon Lime"></button>
+                      <button type="button" class="swatch" data-color="#FF334B" style="width:20px;height:20px;border-radius:50%;background:#FF334B;border:2px solid transparent" title="Red"></button>
+                    </div>
+                  </label>
                 </div>
+
+                <!-- Bottom Content / Caption Header -->
+                <label class="setting" style="margin-bottom:8px">
+                  <div style="display:flex;justify-content:space-between;align-items:center;width:100%">
+                    <span style="font-size:12px;font-weight:600;color:var(--text)">Bottom Caption (Niche Wala Text)</span>
+                  </div>
+                  <input type="text" id="bottomContentInput" placeholder="e.g. खाने कमाने का ठिकाना नहीं डिब्बे में आटा" maxlength="110" style="width:100%;font-size:13px;padding:7px 10px;background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:6px;color:#fff">
+                  <small style="font-size:10px;color:var(--text-muted)">Ye text video ke NICHE black area me aayega, movie ke uper nahi!</small>
+                </label>
 
                 <!-- Auto-Incrementing Part Numbering -->
                 <label class="setting">
@@ -3578,37 +3597,88 @@
 </div>
 
 <!-- ── Clip Customization & Re-render Modal ── -->
-<div class="modal-backdrop" id="clipEditModal" style="display:none">
-  <div class="modal" style="width:min(520px, calc(100vw - 24px));max-height:92vh;overflow-y:auto">
+<div class="modal-backdrop" id="clipEditModal">
+  <div class="modal" style="width:min(540px, calc(100vw - 24px));max-height:92vh;overflow-y:auto">
     <header class="modal-header">
       <div class="modal-title-wrap">
         <span class="lime" style="font-size:9px">VIRAL REEL STUDIO</span>
         <h2 class="modal-title">Customize Clip Overlays &amp; Title</h2>
       </div>
-      <button class="modal-close" id="clipEditCloseBtn">&times;</button>
+      <button class="modal-close-btn" id="clipEditCloseBtn" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
     </header>
     <div class="modal-body" style="display:flex;flex-direction:column;gap:14px;padding:16px">
+      <!-- Live Reel Mockup Preview -->
+      <div style="background:#000;border:1px solid var(--border);border-radius:10px;padding:12px;display:flex;flex-direction:column;align-items:center;position:relative;overflow:hidden;box-shadow:inset 0 0 20px rgba(0,0,0,0.8)">
+        <div style="font-size:9px;text-transform:uppercase;color:var(--text-sub);letter-spacing:1px;margin-bottom:8px">Live Reel Layout Preview (9:16)</div>
+        
+        <div id="editModalPhoneMock" style="width:160px;height:280px;background:#000;border-radius:12px;border:2px solid rgba(255,255,255,0.15);position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;padding:10px 6px">
+          <!-- Top Area in Mockup -->
+          <div style="height:70px;display:flex;align-items:center;justify-content:center;text-align:center">
+            <div id="mockTopBadge" style="background:#FFE500;color:#000;font-weight:800;font-size:9px;padding:3px 7px;border-radius:4px;max-width:145px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+              जय श्री कृष्णा
+            </div>
+          </div>
+          
+          <!-- Middle Video in Mockup (Uncropped 16:9 movie) -->
+          <div style="height:90px;background:linear-gradient(135deg, #1f242d, #2c3340);border:1px solid rgba(255,255,255,0.2);border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#8b949e;font-size:8px;font-weight:600;text-align:center;padding:2px">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-bottom:2px"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            <span>🎬 100% Full Movie</span>
+            <span style="font-size:7px;color:var(--lime);font-weight:700">Zero Crop · Clean Screen</span>
+          </div>
+
+          <!-- Bottom Area in Mockup -->
+          <div style="height:90px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:3px">
+            <div id="mockBottomText" style="color:#ffffff;font-size:8px;font-weight:700;text-shadow:0 1px 3px rgba(0,0,0,0.8);max-width:145px;line-height:1.2;overflow:hidden;text-overflow:ellipsis">
+              खाने कमाने का ठिकाना नहीं
+            </div>
+            <div id="mockPartBadge" style="color:#ffffff;font-size:8px;font-weight:800;background:rgba(255,255,255,0.15);padding:1px 6px;border-radius:3px">
+              Part-1
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Top Hook Input -->
       <label class="setting">
-        <span style="font-weight:600">Top Hook / Caption (Yellow Viral Text)</span>
-        <input type="text" id="editHookInput" placeholder="e.g. Saadi ke baad sab acha ho jayega 😂" style="font-size:13px;padding:8px 12px;background:rgba(0,0,0,0.3);color:#fff;border:1px solid var(--border);border-radius:6px;width:100%">
+        <span style="font-weight:600">Top Hook / Caption (Uper Likha Aane Wala Text)</span>
+        <input type="text" id="editHookInput" placeholder="e.g. जय श्री कृष्णा  या  शादी के बाद सब अच्छा होगा 😂" style="font-size:13px;padding:8px 12px;background:rgba(0,0,0,0.3);color:#fff;border:1px solid var(--border);border-radius:6px;width:100%">
       </label>
-      
-      <!-- Top Hook Color -->
+
+      <!-- Hook Style & Color Selector -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <label class="setting">
+          <span style="font-weight:600">Top Hook Style</span>
+          <select id="editHookStyle" style="font-size:12px;padding:7px;background:rgba(0,0,0,0.3);color:#fff;border:1px solid var(--border);border-radius:6px;width:100%">
+            <option value="card" selected>🟡 Yellow Card Box (Black Text · Ref 4)</option>
+            <option value="outline">🔤 Bold Yellow Text (Black Outline)</option>
+            <option value="white">⚪ Clean White (Dark Shadow)</option>
+          </select>
+        </label>
+
+        <label class="setting">
+          <span style="font-weight:600">Hook Color</span>
+          <div class="swatches" id="editHookColors" style="display:flex;gap:6px;padding-top:4px">
+            <button type="button" class="swatch on" data-color="#FFE500" style="background:#FFE500;width:22px;height:22px;border-radius:50%;border:2px solid #fff" title="Yellow"></button>
+            <button type="button" class="swatch" data-color="#FFFFFF" style="background:#FFFFFF;width:22px;height:22px;border-radius:50%;border:2px solid transparent" title="White"></button>
+            <button type="button" class="swatch" data-color="#00FF88" style="background:#00FF88;width:22px;height:22px;border-radius:50%;border:2px solid transparent" title="Neon Green"></button>
+            <button type="button" class="swatch" data-color="#FF334B" style="background:#FF334B;width:22px;height:22px;border-radius:50%;border:2px solid transparent" title="Red"></button>
+          </div>
+        </label>
+      </div>
+
+      <!-- Bottom Content Text Input -->
       <label class="setting">
-        <span>Hook Text Color</span>
-        <div class="swatches" id="editHookColors" style="display:flex;gap:8px">
-          <button type="button" class="swatch on" data-color="#FFE500" style="background:#FFE500;width:22px;height:22px;border-radius:50%;border:2px solid #fff" title="Yellow"></button>
-          <button type="button" class="swatch" data-color="#FFFFFF" style="background:#FFFFFF;width:22px;height:22px;border-radius:50%;border:2px solid transparent" title="White"></button>
-          <button type="button" class="swatch" data-color="#00FF88" style="background:#00FF88;width:22px;height:22px;border-radius:50%;border:2px solid transparent" title="Neon Green"></button>
-          <button type="button" class="swatch" data-color="#FF334B" style="background:#FF334B;width:22px;height:22px;border-radius:50%;border:2px solid transparent" title="Red"></button>
-        </div>
+        <span style="font-weight:600">Bottom Caption / Content (Niche Likha Aane Wala Text)</span>
+        <input type="text" id="editBottomTextInput" placeholder="e.g. खाने कमाने का ठिकाना नहीं डिब्बे में आटा" style="font-size:13px;padding:8px 12px;background:rgba(0,0,0,0.3);color:#fff;border:1px solid var(--border);border-radius:6px;width:100%">
+        <small style="font-size:10px;color:var(--text-muted)">Ye text video ke NICHE black area me aayega, video ki screen par nahi!</small>
       </label>
 
       <!-- Part Badge Input -->
       <label class="setting">
-        <span style="font-weight:600">Part Badge (Bottom Counter)</span>
-        <input type="text" id="editPartInput" placeholder="e.g. Part-7" style="font-size:13px;padding:8px 12px;background:rgba(0,0,0,0.3);color:#fff;border:1px solid var(--border);border-radius:6px;width:100%">
+        <span style="font-weight:600">Part Number / Badge</span>
+        <input type="text" id="editPartInput" placeholder="e.g. Part-1 ya Next Part-1" style="font-size:13px;padding:8px 12px;background:rgba(0,0,0,0.3);color:#fff;border:1px solid var(--border);border-radius:6px;width:100%">
       </label>
 
       <!-- Video Framing Mode for this clip -->
@@ -4996,7 +5066,7 @@
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21 3-7 18-4-7-7-4 18-7Z"/></svg>
               <span>Publish</span>
             </button>
-            <button class="btn btn-clip-icon btn-clip-edit" id="clip-edit-${clip.jobId}" title="Edit Top Hook / Part title for this clip" style="background:rgba(255,255,255,0.06)">
+            <button class="btn btn-clip-icon btn-clip-edit" id="clip-edit-${clip.jobId}" data-job-id="${clip.jobId}" title="Edit Top Hook &amp; Bottom Caption for this clip" style="background:rgba(255,255,255,0.08);color:var(--lime)">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
             </button>
             <a href="#" class="btn btn-clip-download" id="clip-dl-${clip.jobId}" aria-disabled="true">
@@ -5014,16 +5084,22 @@
       list.appendChild(card);
 
       // Edit clip button
-      card.querySelector(`#clip-edit-${clip.jobId}`).addEventListener('click', (e) => {
-        e.stopPropagation();
-        openClipEditModal(clip);
-      });
+      const editBtn = card.querySelector('.btn-clip-edit');
+      if (editBtn) {
+        editBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          openClipEditModal(clip);
+        });
+      }
 
       // Delete clip button
-      card.querySelector(`#clip-del-${clip.jobId}`).addEventListener('click', (e) => {
-        e.stopPropagation();
-        deleteClipCard(clip.jobId);
-      });
+      const delBtn = card.querySelector('.btn-clip-del');
+      if (delBtn) {
+        delBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          deleteClipCard(clip.jobId);
+        });
+      }
     });
   }
 
@@ -5412,18 +5488,63 @@
       if (previewPart) previewPart.textContent = sample;
     });
 
-    // Clip Edit Modal Handlers
+    // Clip Edit Modal Handlers & Live Mockup
     $('#clipEditCloseBtn')?.addEventListener('click', closeClipEditModal);
     $('#clipEditCancelBtn')?.addEventListener('click', closeClipEditModal);
     $('#clipEditSaveBtn')?.addEventListener('click', handleSaveClipEdit);
+    $('#clipEditModal')?.addEventListener('click', (e) => {
+      if (e.target === $('#clipEditModal')) closeClipEditModal();
+    });
+
+    $('#editHookInput')?.addEventListener('input', updateModalPhoneMock);
+    $('#editHookStyle')?.addEventListener('change', updateModalPhoneMock);
+    $('#editBottomTextInput')?.addEventListener('input', updateModalPhoneMock);
+    $('#editPartInput')?.addEventListener('input', updateModalPhoneMock);
 
     $$('#editHookColors button').forEach(sw => {
       sw.addEventListener('click', () => {
         $$('#editHookColors button').forEach(s => { s.classList.remove('on'); s.style.border = '2px solid transparent'; });
         sw.classList.add('on');
         sw.style.border = '2px solid #fff';
+        updateModalPhoneMock();
       });
     });
+  }
+
+  function updateModalPhoneMock() {
+    const hook = $('#editHookInput')?.value?.trim() || 'जय श्री कृष्णा';
+    const hookStyle = $('#editHookStyle')?.value || 'card';
+    const hookCol = $('#editHookColors button.on')?.dataset.color || '#FFE500';
+    const btm = $('#editBottomTextInput')?.value?.trim() || 'खाने कमाने का ठिकाना नहीं';
+    const part = $('#editPartInput')?.value?.trim() || 'Part-1';
+
+    const mockTop = $('#mockTopBadge');
+    if (mockTop) {
+      mockTop.textContent = hook;
+      if (hookStyle === 'card') {
+        mockTop.style.background = hookCol;
+        mockTop.style.color = '#000000';
+        mockTop.style.textShadow = 'none';
+        mockTop.style.border = 'none';
+      } else {
+        mockTop.style.background = 'transparent';
+        mockTop.style.color = hookCol;
+        mockTop.style.textShadow = '0 1px 4px #000, 0 0 2px #000';
+        mockTop.style.border = 'none';
+      }
+    }
+
+    const mockBtm = $('#mockBottomText');
+    if (mockBtm) {
+      mockBtm.textContent = btm;
+      mockBtm.style.display = btm ? 'block' : 'none';
+    }
+
+    const mockPart = $('#mockPartBadge');
+    if (mockPart) {
+      mockPart.textContent = part;
+      mockPart.style.display = part ? 'inline-block' : 'none';
+    }
   }
 
   function openClipEditModal(clip) {
@@ -5431,14 +5552,29 @@
     const modal = $('#clipEditModal');
     if (!modal) return;
     $('#editHookInput').value = clip.headerHook || $('#topHookInput')?.value || '';
+    if ($('#editHookStyle')) $('#editHookStyle').value = clip.headerStyle || $('#topHookStyle')?.value || 'card';
+    if ($('#editBottomTextInput')) $('#editBottomTextInput').value = clip.bottomText || $('#bottomContentInput')?.value || '';
     $('#editPartInput').value = clip.partBadge || clip.title || 'Part-1';
     $('#editFramingMode').value = clip.framingMode || 'fit-bars';
-    modal.style.display = 'flex';
+
+    const col = clip.headerColor || $('#hookColorSwatches button.on')?.dataset.color || '#FFE500';
+    $$('#editHookColors button').forEach(s => {
+      if (s.dataset.color.toLowerCase() === col.toLowerCase()) {
+        s.classList.add('on');
+        s.style.border = '2px solid #fff';
+      } else {
+        s.classList.remove('on');
+        s.style.border = '2px solid transparent';
+      }
+    });
+
+    updateModalPhoneMock();
+    modal.classList.add('open');
   }
 
   function closeClipEditModal() {
     const modal = $('#clipEditModal');
-    if (modal) modal.style.display = 'none';
+    if (modal) modal.classList.remove('open');
     activeEditingClip = null;
   }
 
@@ -5450,7 +5586,9 @@
     saveBtn.textContent = 'Updating…';
 
     const headerHook = ($('#editHookInput')?.value || '').trim();
+    const headerStyle = $('#editHookStyle')?.value || 'card';
     const headerColor = $('#editHookColors button.on')?.dataset.color || '#FFE500';
+    const bottomText = ($('#editBottomTextInput')?.value || '').trim();
     const partBadge = ($('#editPartInput')?.value || '').trim();
     const framingMode = $('#editFramingMode')?.value || 'fit-bars';
 
@@ -5459,6 +5597,7 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          clipJobId: clip.jobId,
           start: clip.start, end: clip.end,
           captions: clip.captions || [],
           ratio: clip.ratio || $('.ratio-btn.active')?.dataset.ratio || '9:16',
@@ -5466,7 +5605,9 @@
           captionMode: $('#captionMode')?.value || 'Burned in',
           framingMode,
           headerHook,
+          headerStyle,
           headerColor,
+          bottomText,
           partBadge,
           clipTitle: partBadge || clip.title,
           style: getStyleSettings(),
@@ -5481,6 +5622,9 @@
       // Update clip reference
       clip.jobId = d.jobId;
       clip.headerHook = headerHook;
+      clip.headerStyle = headerStyle;
+      clip.headerColor = headerColor;
+      clip.bottomText = bottomText;
       clip.partBadge = partBadge;
       clip.title = partBadge || clip.title;
       clip.framingMode = framingMode;
@@ -5516,7 +5660,9 @@
     const framingMode = $('#framingSegments button.on')?.dataset.mode || 'fit-bars';
     const zoom = (Number($('#zoomRange')?.value) || 100) / 100;
     const headerHook = ($('#topHookInput')?.value || '').trim();
+    const headerStyle = $('#topHookStyle')?.value || 'card';
     const headerColor = $('#hookColorSwatches button.on')?.dataset.color || '#FFE500';
+    const bottomText = ($('#bottomContentInput')?.value || '').trim();
     const partPattern = ($('#partPatternInput')?.value || 'Part-{n}').trim();
 
     btn.disabled = true;
@@ -5533,7 +5679,7 @@
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
           mode, clipCount, segmentSeconds, targetDuration, language, ratio, resolution,
-          framingMode, zoom, headerHook, headerColor, partPattern,
+          framingMode, zoom, headerHook, headerStyle, headerColor, bottomText, partPattern,
           captionMode: $('#captionMode')?.value || 'Burned in',
           style: getStyleSettings(),
           watermark: getWatermarkSettings(),
@@ -6804,6 +6950,7 @@
 
     if (e.key === 'Escape') {
       if (publishModal && publishModal.classList.contains('open')) closePublishModal();
+      else if ($('#clipEditModal') && $('#clipEditModal').classList.contains('open')) closeClipEditModal();
       else if (accountsModal && accountsModal.classList.contains('open')) closeAccountsModal();
       else if (previewModal.classList.contains('open')) closePreviewModal();
       else if (mobileConnectModal.classList.contains('open')) closeMobileConnectModal();

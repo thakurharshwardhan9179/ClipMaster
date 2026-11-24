@@ -4,3 +4,6 @@ node_modules/
 *.log
 *.bak*
 clipmaster-cloud.zip
+
+__pycache__/
+*.pyc

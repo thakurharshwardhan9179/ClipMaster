@@ -1763,6 +1763,7 @@ function toAss(lines, offset, clipEnd, style = {}, width = 1080, height = 1920, 
   const allTexts = [
     ...lines.map(c => String(c.text || '')),
     overlay.headerHook || '',
+    overlay.bottomText || '',
     overlay.partBadge || ''
   ];
   const hasHindi = allTexts.some(txt => /[\u0900-\u097F]/.test(txt));
@@ -1810,9 +1811,15 @@ function toAss(lines, offset, clipEnd, style = {}, width = 1080, height = 1920, 
     backCol = '&H80000000';
   }
 
+  const isVertical = height > width * 1.3; // 9:16 vertical reel layout
+  const isFitBars = overlay.framingMode === 'fit-bars' || !overlay.framingMode;
+
   const posType = style.position || 'Bottom';
   const alignment = posType === 'Top' ? 8 : posType === 'Middle' ? 5 : 2;
-  const marginV = alignment === 2 ? Math.round(260 * scale) : alignment === 8 ? Math.round(200 * scale) : 0;
+  // If vertical 9:16 with fit-bars, keep dialogue subtitles off video in bottom black bar!
+  const marginV = (isVertical && isFitBars && alignment === 2)
+    ? Math.round(350 * scale)
+    : alignment === 2 ? Math.round(260 * scale) : alignment === 8 ? Math.round(200 * scale) : 0;
   const marginH = Math.round(70 * scale);
 
   const { styleStr: wmStyle, safeText: wmText } = buildWatermarkStyle(watermark, width, height);
@@ -1823,23 +1830,49 @@ function toAss(lines, offset, clipEnd, style = {}, width = 1080, height = 1920, 
     head += wmStyle + '\n';
   }
 
-  // Header Hook style (Yellow/Gold bold viral font, centered at top bar)
+  // Header Hook style (Upar wala Viral Title/Hook)
   if (overlay.headerHook && String(overlay.headerHook).trim()) {
     const hookCol = hexToAssColor(overlay.headerColor || '#FFE500', 1);
-    const hookFontSize = Math.round((Number(overlay.headerSize) || 78) * scale);
+    const hookFontSize = Math.round((Number(overlay.headerSize) || 76) * scale);
     const hookFont = hasHindi ? 'Nirmala UI' : 'Montserrat';
-    const hookMarginV = Math.round(170 * scale);
-    const hookOutline = Math.round(6 * scale);
-    const hookShadow = Math.round(3 * scale);
-    head += `Style: HeaderHook,${hookFont},${hookFontSize},${hookCol},${hookCol},&H00000000,&H90000000,-1,0,0,0,100,100,0,0,1,${hookOutline},${hookShadow},8,${marginH},${marginH},${hookMarginV},1\n`;
+    // Center in top black bar when vertical 9:16 (top bar is 0 to 656px)
+    const hookMarginV = isVertical ? Math.round(270 * scale) : Math.round(40 * scale);
+
+    const hookStyleMode = overlay.headerStyle || 'card';
+    if (hookStyleMode === 'card') {
+      // Yellow Card Box with Bold Black Text (Like Reference 4 "जय श्री कृष्णा")
+      const boxOutline = Math.round(14 * scale);
+      head += `Style: HeaderHook,${hookFont},${hookFontSize},&H00000000,&H00000000,${hookCol},${hookCol},-1,0,0,0,100,100,0,0,3,${boxOutline},0,8,${marginH},${marginH},${hookMarginV},1\n`;
+    } else {
+      // Bold Yellow Text with Black Outline & Drop Shadow
+      const hookOutline = Math.round(6 * scale);
+      const hookShadow = Math.round(3 * scale);
+      head += `Style: HeaderHook,${hookFont},${hookFontSize},${hookCol},${hookCol},&H00000000,&H90000000,-1,0,0,0,100,100,0,0,1,${hookOutline},${hookShadow},8,${marginH},${marginH},${hookMarginV},1\n`;
+    }
   }
 
-  // Part Badge style (Bold Part Badge, e.g. "Part-7" or "Part 1")
-  if (overlay.partBadge && String(overlay.partBadge).trim()) {
+  // Bottom Content Text style (e.g. "खाने कमाने का ठिकाना नहीं डिब्बे में आटा")
+  const hasBottomText = overlay.bottomText && String(overlay.bottomText).trim();
+  const hasPartBadge = overlay.partBadge && String(overlay.partBadge).trim();
+
+  if (hasBottomText) {
+    const btmCol = hexToAssColor(overlay.bottomColor || '#FFFFFF', 1);
+    const btmFontSize = Math.round((Number(overlay.bottomSize) || 68) * scale);
+    const btmFont = hasHindi ? 'Nirmala UI' : 'Montserrat';
+    // If part badge is also present, place bottom text above part badge in bottom bar
+    const btmMarginV = isVertical ? Math.round((hasPartBadge ? 360 : 300) * scale) : Math.round(50 * scale);
+    const btmOutline = Math.round(5 * scale);
+    const btmShadow = Math.round(2 * scale);
+    head += `Style: BottomText,${btmFont},${btmFontSize},${btmCol},${btmCol},&H00000000,&H90000000,-1,0,0,0,100,100,0,0,1,${btmOutline},${btmShadow},2,${marginH},${marginH},${btmMarginV},1\n`;
+  }
+
+  // Part Badge style (e.g. "Part-1" or "Part-7")
+  if (hasPartBadge) {
     const partCol = hexToAssColor(overlay.partColor || '#FFFFFF', 1);
-    const partFontSize = Math.round((Number(overlay.partSize) || 68) * scale);
+    const partFontSize = Math.round((Number(overlay.partSize) || 66) * scale);
     const partFont = hasHindi ? 'Nirmala UI' : 'Impact';
-    const partMarginV = Math.round(200 * scale);
+    // Place in bottom bar, below bottom text or dead center of bottom bar
+    const partMarginV = isVertical ? Math.round((hasBottomText ? 210 : 300) * scale) : Math.round(45 * scale);
     const partOutline = Math.round(5 * scale);
     const partShadow = Math.round(2 * scale);
     head += `Style: PartBadge,${partFont},${partFontSize},${partCol},${partCol},&H00000000,&H90000000,-1,0,0,0,100,100,0,0,1,${partOutline},${partShadow},2,${marginH},${marginH},${partMarginV},1\n`;
@@ -1860,8 +1893,14 @@ function toAss(lines, offset, clipEnd, style = {}, width = 1080, height = 1920, 
     head += `Dialogue: 2,0:00:00.00,${assTime(totalDuration)},HeaderHook,,0,0,0,,${safeHook}\n`;
   }
 
+  // Permanent Bottom Content Text event spanning the entire clip
+  if (hasBottomText) {
+    const safeBtm = String(overlay.bottomText).trim().replace(/[\r\n]+/g, '\\N').replace(/[{}]/g, '');
+    head += `Dialogue: 2,0:00:00.00,${assTime(totalDuration)},BottomText,,0,0,0,,${safeBtm}\n`;
+  }
+
   // Permanent Part Badge event spanning the entire clip
-  if (overlay.partBadge && String(overlay.partBadge).trim()) {
+  if (hasPartBadge) {
     const safePart = String(overlay.partBadge).trim().replace(/[\r\n]+/g, ' ').replace(/[{}]/g, '');
     head += `Dialogue: 2,0:00:00.00,${assTime(totalDuration)},PartBadge,,0,0,0,,${safePart}\n`;
   }
@@ -1903,11 +1942,16 @@ function renderJob(project, options) {
     : [];
   const captionMode = ['Burned in', 'Separate .srt', 'Both'].includes(options.captionMode) ? options.captionMode : 'Burned in';
 
+  // ── Framing Mode & Aspect Ratio Calculation ──
+  const framingMode = ['fit-bars', 'blur-bg', 'crop-fill'].includes(options.framingMode) ? options.framingMode : 'fit-bars';
+  const zoom = Math.max(0.5, Math.min(2.0, Number(options.zoom) || 1.0));
+
   let captionFile = null;
   let tempAssFile = null;
   const hasWatermark = options.watermark && options.watermark.enabled && String(options.watermark.text || '').trim();
   const hasOverlay = Boolean(
     (options.headerHook && String(options.headerHook).trim()) ||
+    (options.bottomText && String(options.bottomText).trim()) ||
     (options.partBadge && String(options.partBadge).trim())
   );
 
@@ -1921,11 +1965,15 @@ function renderJob(project, options) {
     const style = options.style || {};
     const overlay = {
       headerHook: options.headerHook,
+      headerStyle: options.headerStyle || 'card',
       headerColor: options.headerColor || '#FFE500',
       headerSize: options.headerSize || 76,
+      bottomText: options.bottomText,
       partBadge: options.partBadge,
       partColor: options.partColor || '#FFFFFF',
-      partSize: options.partSize || 68
+      partSize: options.partSize || 66,
+      framingMode,
+      ratio
     };
     tempAssFile = path.join(DATA, `${id}.ass`);
     fs.writeFileSync(tempAssFile, '\ufeff' + toAss(
@@ -1940,10 +1988,6 @@ function renderJob(project, options) {
     ), 'utf8');
     assEscaped = tempAssFile.replace(/\\/g, '/').replace(/^([A-Za-z]):/, '$1\\:').replace(/'/g, "\\'");
   }
-
-  // ── Framing Mode & Aspect Ratio Calculation ──
-  const framingMode = ['fit-bars', 'blur-bg', 'crop-fill'].includes(options.framingMode) ? options.framingMode : 'fit-bars';
-  const zoom = Math.max(0.5, Math.min(2.0, Number(options.zoom) || 1.0));
 
   let baseVideoFilter;
   if (framingMode === 'blur-bg') {
@@ -2093,7 +2137,9 @@ function renderJob(project, options) {
     framingMode,
     zoom,
     headerHook: options.headerHook || null,
+    headerStyle: options.headerStyle || 'card',
     headerColor: options.headerColor || '#FFE500',
+    bottomText: options.bottomText || null,
     partBadge: options.partBadge || null,
     ratio, resolution: options.resolution || '1080p',
     startedAt: Date.now()
@@ -2526,7 +2572,9 @@ async function handle(req, res) {
 
         const partPattern = String(body.partPattern || 'Part-{n}').trim();
         const headerHook = String(body.headerHook || '').trim();
+        const headerStyle = String(body.headerStyle || 'card').trim();
         const headerColor = String(body.headerColor || '#FFE500').trim();
+        const bottomText = String(body.bottomText || '').trim();
         const framingMode = ['fit-bars', 'blur-bg', 'crop-fill'].includes(body.framingMode) ? body.framingMode : 'fit-bars';
         const zoom = Math.max(0.5, Math.min(2.0, Number(body.zoom) || 1.0));
 
@@ -2545,7 +2593,9 @@ async function handle(req, res) {
               title: partBadge || `Part ${String(partNum).padStart(3, '0')}`,
               partBadge,
               headerHook,
+              headerStyle,
               headerColor,
+              bottomText,
               captions: cues.filter(c => c.end > start && c.start < end)
             });
           }
@@ -2561,7 +2611,9 @@ async function handle(req, res) {
             const partNum = i + 1;
             highlights[i].partBadge = partPattern ? partPattern.replace(/\{n\}/gi, String(partNum)).replace(/\{pad\}/gi, String(partNum).padStart(3, '0')) : `Part ${partNum}`;
             highlights[i].headerHook = headerHook;
+            highlights[i].headerStyle = headerStyle;
             highlights[i].headerColor = headerColor;
+            highlights[i].bottomText = bottomText;
           }
         }
 
@@ -2578,7 +2630,9 @@ async function handle(req, res) {
           framingMode,
           zoom,
           headerHook: h.headerHook || headerHook || null,
+          headerStyle: h.headerStyle || headerStyle || 'card',
           headerColor: h.headerColor || headerColor || '#FFE500',
+          bottomText: h.bottomText || bottomText || null,
           partBadge: h.partBadge || null,
           clipTitle: h.title,
           downloadName: `ClipMaster-${mode === 'full' ? 'Part' : 'Short'}-${String(i + 1).padStart(3, '0')}-${safeName(h.title).slice(0, 32)}.mp4`,
@@ -2591,6 +2645,8 @@ async function handle(req, res) {
           jobId: j.id, title: j.title, start: j.start, end: j.end,
           score: highlights[i].score, downloadName: j.downloadName,
           headerHook: j.headerHook,
+          headerStyle: j.headerStyle,
+          bottomText: j.bottomText,
           partBadge: j.partBadge,
           framingMode: j.framingMode,
           ratio: j.ratio,
@@ -2623,6 +2679,28 @@ async function handle(req, res) {
         const updated = String(options.projectName || '').trim();
         const renderProject = updated ? withProject(project.id, { name: updated }) : project;
         const job = renderJob(renderProject, options);
+
+        if (options.clipJobId && project.autoClips && project.autoClips.length) {
+          const updatedClips = project.autoClips.map(c => {
+            if (c.jobId === options.clipJobId) {
+              return {
+                ...c,
+                jobId: job.id,
+                title: options.clipTitle || options.partBadge || c.title,
+                partBadge: options.partBadge !== undefined ? options.partBadge : c.partBadge,
+                headerHook: options.headerHook !== undefined ? options.headerHook : c.headerHook,
+                headerStyle: options.headerStyle !== undefined ? options.headerStyle : c.headerStyle,
+                bottomText: options.bottomText !== undefined ? options.bottomText : c.bottomText,
+                framingMode: options.framingMode || c.framingMode,
+                ratio: options.ratio || c.ratio,
+                downloadUrl: `/api/jobs/${job.id}/download`
+              };
+            }
+            return c;
+          });
+          withProject(project.id, { autoClips: updatedClips });
+        }
+
         return json(res, 202, { jobId: job.id, status: job.status });
       } catch (e) { return json(res, 400, { error: e.message }); }
     }
