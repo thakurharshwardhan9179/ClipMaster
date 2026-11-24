@@ -1353,6 +1353,18 @@ async function probe(file) {
   };
 }
 
+// ── YouTube async download jobs map ────────────────────────
+const ytDownloads = new Map();
+
+async function runAsyncYoutubeImport(downloadId, url) {
+  try {
+    const project = await importYoutube(url);
+    ytDownloads.set(downloadId, { status: 'complete', project, error: null });
+  } catch (err) {
+    ytDownloads.set(downloadId, { status: 'failed', project: null, error: err.message });
+  }
+}
+
 // ── YouTube download ────────────────────────────────────────
 async function importYoutube(input) {
   let parsed;
@@ -1378,7 +1390,8 @@ async function importYoutube(input) {
     '--extractor-retries', '5',
     '--fragment-retries', '5',
     '--max-filesize', '8G',
-    '-f', 'bv*[height<=1080]+ba/b[height<=1080]',
+    '--extractor-args', 'youtube:player_client=android,web',
+    '-f', 'b[ext=mp4][height<=1080]/bv*[height<=1080]+ba/b[height<=1080]/b',
     '--merge-output-format', 'mp4',
     '--remux-video', 'mp4',
     '--write-subs',
@@ -2327,15 +2340,34 @@ async function handle(req, res) {
     return;
   }
 
-  // ── YouTube import ──────────────────────────────────────
-  if (req.method === 'POST' && url.pathname === '/api/youtube') {
+  // ── YouTube import (Async capable with status polling to prevent Cloudflare 100s timeout) ──
+  if (req.method === 'POST' && (url.pathname === '/api/youtube' || url.pathname === '/api/youtube/')) {
     let body;
     try { body = await parseBody(req); }
     catch (e) { return json(res, 400, { error: e.message }); }
-    try {
-      const project = await importYoutube(String(body.url || '').trim());
-      return json(res, 201, { project });
-    } catch (e) { return json(res, 422, { error: e.message }); }
+
+    const ytUrl = String(body.url || '').trim();
+    if (!ytUrl) return json(res, 400, { error: 'Please enter a valid YouTube URL.' });
+
+    if (body.sync) {
+      try {
+        const project = await importYoutube(ytUrl);
+        return json(res, 201, { project });
+      } catch (e) { return json(res, 422, { error: e.message }); }
+    }
+
+    const downloadId = crypto.randomUUID();
+    ytDownloads.set(downloadId, { status: 'downloading', project: null, error: null, startedAt: Date.now() });
+    runAsyncYoutubeImport(downloadId, ytUrl);
+    return json(res, 202, { downloadId, status: 'downloading' });
+  }
+
+  // ── YouTube download status polling ──────────────────────
+  if (req.method === 'GET' && parts[0] === 'api' && parts[1] === 'youtube' && parts[2] === 'status' && parts[3]) {
+    const downloadId = parts[3];
+    const item = ytDownloads.get(downloadId);
+    if (!item) return json(res, 404, { error: 'Download job not found or expired.' });
+    return json(res, 200, item);
   }
 
   // ── Social Accounts & Facebook/Instagram API ─────────────

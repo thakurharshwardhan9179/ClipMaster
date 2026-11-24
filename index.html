@@ -4793,17 +4793,64 @@
     }
     if (errorEl) errorEl.textContent = '';
     btn.disabled = true;
-    btn.textContent = 'Downloading…';
+    btn.textContent = 'Connecting…';
     try {
       const r = await fetch('/api/youtube', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({url})
       });
-      const d = await r.json();
+      const text = await r.text();
+      let d;
+      try {
+        d = JSON.parse(text);
+      } catch (err) {
+        if (text.includes('524') || text.includes('timeout')) {
+          throw new Error('Cloudflare Tunnel timeout (100s exceeded). Please try again or download & upload directly.');
+        } else if (text.includes('502') || text.includes('Bad Gateway')) {
+          throw new Error('Cloudflare Tunnel connection reset. Please re-run the Colab cell.');
+        } else {
+          throw new Error('Server returned HTML error: ' + (text.slice(0, 80).replace(/<[^>]+>/g, '').trim() || 'Gateway Error'));
+        }
+      }
+
       if (!r.ok) throw new Error(d.error || 'YouTube import failed');
-      closeYtModal();
-      setupProjectUI(d.project);
+
+      if (d.project) {
+        closeYtModal();
+        setupProjectUI(d.project);
+        toast('YouTube video imported!', 'success');
+        return;
+      }
+
+      if (d.downloadId) {
+        let seconds = 0;
+        while (true) {
+          await new Promise(res => setTimeout(res, 1200));
+          seconds += 1.2;
+          btn.textContent = `Downloading (${Math.round(seconds)}s)…`;
+
+          let pollRes;
+          try {
+            pollRes = await fetch(`/api/youtube/status/${d.downloadId}`);
+          } catch {
+            continue; // Temporary network jitter
+          }
+
+          const pollText = await pollRes.text();
+          let pollData;
+          try { pollData = JSON.parse(pollText); } catch { continue; }
+
+          if (pollData.status === 'complete' && pollData.project) {
+            closeYtModal();
+            setupProjectUI(pollData.project);
+            toast('YouTube video imported successfully!', 'success');
+            return;
+          } else if (pollData.status === 'failed') {
+            throw new Error(pollData.error || 'YouTube download failed');
+          }
+        }
+      }
     } catch (e) {
       if (errorEl) errorEl.textContent = e.message;
       else toast(e.message, 'error');
