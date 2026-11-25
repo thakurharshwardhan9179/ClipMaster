@@ -1994,7 +1994,7 @@ function renderJob(project, options) {
   }
 
   let assEscaped = null;
-  if (((captions.length && captionMode !== 'Separate .srt') || hasWatermark || hasOverlay) && ratio !== '16:9') {
+  if ((captions.length && captionMode !== 'Separate .srt') || hasWatermark || hasOverlay) {
     const style = options.style || {};
     const overlay = {
       headerHook: options.headerHook,
@@ -2088,7 +2088,7 @@ function renderJob(project, options) {
       vFilters.push(`ass='${assEscaped}'`);
     }
 
-    if (shield.progressBar && ratio !== '16:9') {
+    if (shield.progressBar) {
       // Sleek neon lime bottom progress bar (drawbox over clip duration)
       vFilters.push(`drawbox=x=0:y=ih-8:w='iw*(t/${rawDuration.toFixed(2)})':h=6:color=0xC8FF63@0.85:t=fill`);
     }

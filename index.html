@@ -5102,8 +5102,9 @@
   /* ── Ratio Buttons ──────────────────────────────────────── */
   $$('.ratio-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      $$('.ratio-btn').forEach(b => b.classList.remove('active'));
+      $$('.ratio-btn').forEach(b => { b.classList.remove('active'); b.classList.remove('on'); });
       btn.classList.add('active');
+      btn.classList.add('on');
     });
   });
 
@@ -5726,7 +5727,7 @@
           clipJobId: clip.jobId,
           start: clip.start, end: clip.end,
           captions: clip.captions || [],
-          ratio: clip.ratio || $('.ratio-btn.active')?.dataset.ratio || '9:16',
+          ratio: '9:16', // Always 9:16 vertical reel layout with black bars & overlays
           resolution: $('#autoResolution')?.value || '1080p',
           captionMode: $('#captionMode')?.value || 'Burned in',
           framingMode,
@@ -5780,7 +5781,7 @@
     const segmentSeconds = parseInt($('#segmentLen').value) || 60;
     const targetDuration = parseInt($('#clipDurationPref')?.value) || 40;
     const language = $('#captionLang').value;
-    const ratio = $('.ratio-btn.active')?.dataset.ratio || '9:16';
+    const ratio = $('.ratio-btn.active, .ratio-btn.on')?.dataset.ratio || '9:16';
     const resolution = $('#autoResolution').value;
 
     const framingMode = $('#framingSegments button.on')?.dataset.mode || 'fit-bars';
@@ -5967,7 +5968,7 @@
     const note = $('#manualNote');
     const captions = getCaptions();
     const style = getStyleSettings();
-    const ratio = $('.ratio-btn.active')?.dataset.ratio || '9:16';
+    const ratio = $('.ratio-btn.active, .ratio-btn.on')?.dataset.ratio || '9:16';
     const resolution = $('#autoResolution').value;
     const captionMode = $('#captionMode').value;
 
