@@ -604,6 +604,57 @@
       object-fit: contain;
       background: #000;
     }
+    /* ── Separated Video & Caption Regions Layout (Mobile & Responsive) ── */
+    .video-layout-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+      border-radius: 10px;
+      overflow: hidden;
+      width: 100%;
+      position: relative;
+    }
+    .video-caption-region {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 10px 16px;
+      box-sizing: border-box;
+      background: #000;
+      z-index: 2;
+    }
+    .video-caption-region:empty,
+    .video-caption-region .caption-text-content:empty {
+      display: none;
+    }
+    .top-caption-region {
+      padding-top: 14px;
+      padding-bottom: 8px;
+    }
+    .bottom-caption-region {
+      padding-top: 8px;
+      padding-bottom: 14px;
+    }
+    .caption-text-content {
+      max-width: 92%;
+      word-wrap: break-word;
+      font-size: 15px;
+      font-weight: 700;
+      line-height: 1.35;
+      text-align: center;
+    }
+    .top-caption-region .caption-text-content {
+      color: #FFE500;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.9);
+    }
+    .bottom-caption-region .caption-text-content {
+      color: #FFFFFF;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.9);
+    }
     .play-overlay-btn {
       position: absolute;
       z-index: 5;
@@ -2023,7 +2074,9 @@
       .import input, .import > .btn { grid-column: 1 / -1; width: 100%; }
       .features { grid-template-columns: 1fr; }
       .features span { justify-content: flex-start; }
-      .frame { height: 230px; }
+      .video-caption-region { padding: 8px 12px; }
+      .caption-text-content { font-size: 13.5px; }
+      .frame { height: auto; min-height: 180px; max-height: 260px; aspect-ratio: 16/9; width: 100%; }
       .ranges { grid-template-columns: 1fr; }
       .times { grid-template-columns: 1fr 1fr; }
       .times > svg { display: none; }
@@ -2944,11 +2997,24 @@
               </div>
             </header>
             <div class="stage">
-              <div class="frame">
-                <video id="sourceVideo" preload="metadata" playsinline></video>
-                <button id="btnPlayPause" class="play-overlay-btn" aria-label="Play or pause">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" id="playIcon"><path d="m9 7 8 5-8 5V7Z"/></svg>
-                </button>
+              <div class="video-layout-container" id="videoLayoutContainer">
+                <!-- Top Caption Region (Empty space above video for user-entered top hook) -->
+                <div class="video-caption-region top-caption-region" id="topCaptionRegion">
+                  <div class="caption-text-content" id="topCaptionContent"></div>
+                </div>
+
+                <!-- Centered 16:9 Video Frame -->
+                <div class="frame">
+                  <video id="sourceVideo" preload="metadata" playsinline></video>
+                  <button id="btnPlayPause" class="play-overlay-btn" aria-label="Play or pause">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" id="playIcon"><path d="m9 7 8 5-8 5V7Z"/></svg>
+                  </button>
+                </div>
+
+                <!-- Bottom Caption Region (Empty space below video for user-entered bottom content) -->
+                <div class="video-caption-region bottom-caption-region" id="bottomCaptionRegion">
+                  <div class="caption-text-content" id="bottomCaptionContent"></div>
+                </div>
               </div>
               <div class="vidmeta">
                 <strong id="videoMeta">Video Title</strong>
@@ -4133,8 +4199,21 @@
       </button>
     </header>
     <div style="padding:16px">
-      <div style="border-radius:8px;background:#000;overflow:hidden;display:grid;place-items:center;max-height:460px">
-        <video id="previewVideoPlayer" controls playsinline style="max-height:440px;width:auto"></video>
+      <div class="video-layout-container" id="previewLayoutContainer" style="border-radius:8px;background:#000;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;width:100%;min-height:280px">
+        <!-- Top Caption Region (Empty space above 16:9 video) -->
+        <div class="video-caption-region top-caption-region" id="previewTopCaptionRegion">
+          <div class="caption-text-content" id="previewTopCaptionContent"></div>
+        </div>
+
+        <!-- Centered 16:9 Video -->
+        <div style="display:grid;place-items:center;width:100%;overflow:hidden;background:#000">
+          <video id="previewVideoPlayer" controls playsinline style="max-height:360px;width:100%;object-fit:contain;background:#000;aspect-ratio:16/9"></video>
+        </div>
+
+        <!-- Bottom Caption Region (Empty space below 16:9 video) -->
+        <div class="video-caption-region bottom-caption-region" id="previewBottomCaptionRegion">
+          <div class="caption-text-content" id="previewBottomCaptionContent"></div>
+        </div>
       </div>
     </div>
     <footer class="modal-footer" style="position:static;height:auto;background:transparent">
@@ -5188,14 +5267,14 @@
       if (thumbSpin) thumbSpin.style.display = 'none';
       if (prevBtn) {
         prevBtn.disabled = false;
-        prevBtn.onclick = () => previewClip(job.downloadUrl, clip.title || 'Clip Preview');
+        prevBtn.onclick = () => previewClip(job.downloadUrl, clip.title || 'Clip Preview', clip);
       }
       if (pubBtn) {
         pubBtn.disabled = false;
         pubBtn.onclick = () => openPublishModal(clip, job);
       }
       if (thumbBox) {
-        thumbBox.onclick = () => previewClip(job.downloadUrl, clip.title || 'Clip Preview');
+        thumbBox.onclick = () => previewClip(job.downloadUrl, clip.title || 'Clip Preview', clip);
       }
       if (copyBtn) {
         copyBtn.disabled = false;
@@ -5763,7 +5842,7 @@
   const previewModal = $('#clipPreviewModal');
   const previewVideo = $('#previewVideoPlayer');
 
-  function previewClip(src, title) {
+  function previewClip(src, title, clip = null) {
     if (!src) return toast('Clip is still rendering…', 'error');
     const fullUrl = src.startsWith('http') ? src : window.location.origin + src;
     previewVideo.src = fullUrl;
@@ -5771,9 +5850,35 @@
     $('#previewDlBtn').href = fullUrl;
     $('#previewDlBtn').download = `${(title || 'clip').toLowerCase().replace(/\s+/g, '-')}.mp4`;
     $('#previewCopyBtn').onclick = () => copyClipLink(fullUrl);
+
+    const topText = (clip && clip.headerHook) ? clip.headerHook : ($('#topHookInput')?.value || '').trim();
+    const btmText = (clip && (clip.bottomText || clip.partBadge))
+      ? [clip.bottomText, clip.partBadge].filter(Boolean).join(' · ')
+      : [$('#bottomContentInput')?.value, $('#partPatternInput')?.value].filter(Boolean).join(' · ');
+
+    const topEl = $('#previewTopCaptionContent');
+    const btmEl = $('#previewBottomCaptionContent');
+    if (topEl) topEl.textContent = topText;
+    if (btmEl) btmEl.textContent = btmText;
+
     previewModal.classList.add('open');
     previewVideo.play().catch(()=>{});
   }
+
+  function updateWorkspaceCaptions() {
+    const topText = ($('#topHookInput')?.value || '').trim();
+    const bottomText = ($('#bottomContentInput')?.value || '').trim();
+    const partText = ($('#partPatternInput')?.value || '').trim();
+    const btmCombined = [bottomText, partText].filter(Boolean).join(' · ');
+
+    const topEl = $('#topCaptionContent');
+    const btmEl = $('#bottomCaptionContent');
+    if (topEl) topEl.textContent = topText;
+    if (btmEl) btmEl.textContent = btmCombined;
+  }
+  $('#topHookInput')?.addEventListener('input', updateWorkspaceCaptions);
+  $('#bottomContentInput')?.addEventListener('input', updateWorkspaceCaptions);
+  $('#partPatternInput')?.addEventListener('input', updateWorkspaceCaptions);
 
   function closePreviewModal() {
     previewModal.classList.remove('open');
