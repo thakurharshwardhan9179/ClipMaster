@@ -28,20 +28,24 @@ RUN useradd -m -u 1000 user
 WORKDIR /app
 
 # Create necessary directories
-RUN mkdir -p /app/data/uploads /app/data/exports/previews /app/assets/bgm /app/vendor
+RUN mkdir -p /app/data/uploads /app/data/exports/previews /app/assets/bgm /app/vendor /app/lib
 
 # Copy application files
 COPY --chown=user:user package.json ./
 COPY --chown=user:user server.js index.html ./
+COPY --chown=user:user lib/ ./lib/
 COPY --chown=user:user assets/ ./assets/
 
-# Grant full read/write permissions to user
+# Restrict permissions appropriately for the non-root service user
 RUN chown -R user:user /app \
-    && chmod -R 777 /app/data /app/assets /app/vendor
+    && chmod -R 755 /app/data /app/assets /app/vendor /app/lib
 
 USER user
 ENV PORT=7860
 ENV NODE_ENV=production
 EXPOSE 7860
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD curl -fsS http://127.0.0.1:7860/api/health || exit 1
 
 CMD ["node", "server.js"]

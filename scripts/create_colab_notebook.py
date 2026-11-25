@@ -57,8 +57,15 @@ node_env = os.environ.copy()
 if facebook_access_token and facebook_access_token.strip():
     node_env["FB_ACCESS_TOKEN"] = facebook_access_token.strip()
 
-server_proc = subprocess.Popen(["node", "server.js"], cwd=app_dir, env=node_env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-time.sleep(2)
+log_file = open(f"{app_dir}/server.log", "a", encoding="utf-8")
+server_proc = subprocess.Popen(["node", "server.js"], cwd=app_dir, env=node_env, stdout=log_file, stderr=subprocess.STDOUT)
+time.sleep(2.5)
+
+access_key = ""
+key_file = f"{app_dir}/data/.access_key"
+if os.path.exists(key_file):
+    with open(key_file, "r", encoding="utf-8") as kf:
+        access_key = kf.read().strip()
 
 # Start Tunnel
 tunnel_cmd = ["cloudflared", "tunnel", "--url", "http://127.0.0.1:4173"]
@@ -71,7 +78,7 @@ while time.time() - start_time < 35:
     if not line:
         time.sleep(0.2)
         continue
-    match = re.search(r'https://[a-zA-Z0-9-]+\.trycloudflare\.com', line)
+    match = re.search(r'https://[a-zA-Z0-9-]+\\.trycloudflare\\.com', line)
     if match:
         public_url = match.group(0)
         break
@@ -97,12 +104,15 @@ if public_url:
       </div>
 
       <div style="color: #8b949e; font-size: 12px; line-height: 1.6;">
+        <p style="margin: 4px 0;">🔐 <b>Remote Access Key:</b> <code style="color:#00ff88;background:#0d1117;padding:2px 6px;border-radius:4px">{{access_key or 'See server.log'}}</code></p>
         <p style="margin: 4px 0;">📱 <b>Mobile Tip:</b> Open this link on your mobile phone browser (Chrome/Safari) and tap <b>'Add to Home Screen'</b> for 1-tap app access.</p>
-        <p style="margin: 4px 0;">💡 <b>Note:</b> Keep this Google Colab tab open while you are using ClipMaster.</p>
+        <p style="margin: 4px 0;">💡 <b>Note:</b> Keep this Google Colab tab open while you are using ClipMaster. Server logs are saved at <code>/content/clipmaster/server.log</code>.</p>
       </div>
     </div>
     """))
-    print(f"\\nDIRECT URL: {{public_url}}\\n")
+    print(f"\\nDIRECT URL: {{public_url}}")
+    if access_key:
+        print(f"ACCESS KEY: {{access_key}}\\n")
 else:
     print("❌ Tunnel connection timed out. Please run the cell again.")
 '''

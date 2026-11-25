@@ -1,4 +1,6 @@
-const fs = require('fs');
+'use strict';
+const fs = require('node:fs');
+const assert = require('node:assert');
 
 const html = fs.readFileSync('index.html', 'utf8');
 console.log('HTML size:', html.length, 'bytes');
@@ -10,12 +12,8 @@ console.log('Inline scripts found:', scriptMatches ? scriptMatches.length : 0);
 if (scriptMatches) {
   scriptMatches.forEach((s, idx) => {
     const code = s.replace(/<script[^>]*>/i, '').replace(/<\/script>/i, '');
-    try {
-      new Function(code);
-      console.log('Script ' + idx + ' syntax OK! Length: ' + code.length);
-    } catch (e) {
-      console.error('Script ' + idx + ' syntax error:', e.message);
-    }
+    new Function(code);
+    console.log('Script ' + idx + ' syntax OK! Length: ' + code.length);
   });
 }
 
@@ -32,8 +30,15 @@ for (const id of uniqueHashIds) {
   }
 }
 
-if (missingHash.length > 0) {
-  console.warn('Missing element IDs referenced by $("#..."):', missingHash);
-} else {
-  console.log('ALL', uniqueHashIds.length, 'IDs referenced by $("#...") are present in index.html!');
-}
+assert.strictEqual(missingHash.length, 0, `Missing element IDs referenced by $("#..."): ${missingHash.join(', ')}`);
+console.log('ALL', uniqueHashIds.length, 'IDs referenced by $("#...") are present in index.html!');
+
+// Regression checks for previously identified frontend bugs
+const downloadAllListeners = html.match(/\$\(['"]#btnDownloadAll['"]\)\?\.addEventListener\(['"]click['"]/g) || [];
+assert.strictEqual(downloadAllListeners.length, 1, `Expected 1 #btnDownloadAll listener, found ${downloadAllListeners.length}`);
+assert.ok(!html.includes('api.qrserver.com'), 'External QR dependency api.qrserver.com should not be present');
+assert.ok(html.includes('#clipSelection'), '#clipSelection CSS rule must exist');
+assert.ok(html.includes('#waveformPlayhead'), '#waveformPlayhead CSS rule must exist');
+assert.ok(!html.includes('id="moreDropdown" style="display:none"'), '#moreDropdown should not have inline display:none');
+assert.ok(!html.includes('id="batchProgress" style="display:none"'), '#batchProgress should use hidden attribute instead of inline display:none');
+console.log('ALL frontend regression checks passed!');
